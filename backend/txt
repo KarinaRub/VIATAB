@@ -1,0 +1,7 @@
+For Part 1, I created a Spring Boot backend for the VIATAB application.
+
+First, I built the project using Maven. This created a JAR file in the target folder.
+
+Then I created a Dockerfile for the backend. The Dockerfile uses a Java 21 runtime image, copies the JAR file into the container, exposes port 8080, and starts the application with java -jar app.jar.
+
+After that, I built a Docker image called viatab-backend and ran it as a Docker container. I verified that the backend works by opening /api/stories in the browser.

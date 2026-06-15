@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: viatab-postgres
+    environment:
+      POSTGRES_DB: viatab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - viatab_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: viatab-backend-container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: viatab-frontend-container
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  viatab_pgdata:

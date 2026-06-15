@@ -1,0 +1,74 @@
+name: VIATAB CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build and test backend
+        working-directory: backend
+        run: ./mvnw clean package
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Start Minikube
+        uses: medyagh/setup-minikube@latest
+
+      - name: Build backend Docker image
+        run: docker build -t viatab-backend:latest ./backend
+
+      - name: Build frontend Docker image
+        run: docker build -t viatab-frontend:latest ./frontend
+
+      - name: Load images into Minikube
+        run: |
+          minikube image load viatab-backend:latest
+          minikube image load viatab-frontend:latest
+
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/
+
+      - name: Check Kubernetes pods
+        run: kubectl get pods
+
+      - name: Check Kubernetes services
+        run: kubectl get services
+
+      - name: Wait for backend rollout
+        run: kubectl rollout status deployment/viatab-backend --timeout=120s
+
+      - name: Wait for frontend rollout
+        run: kubectl rollout status deployment/viatab-frontend --timeout=120s
+
+      - name: Wait for postgres rollout
+        run: kubectl rollout status deployment/viatab-postgres --timeout=120s
